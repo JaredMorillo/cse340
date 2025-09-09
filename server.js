@@ -5,11 +5,24 @@
 /* ***********************
  * Require Statements
  *************************/
+const static = require("./routes/static")
 const expressLayouts = require("express-ejs-layouts")
 const express = require("express")
 const env = require("dotenv").config()
 const app = express()
-const static = require("./routes/static")
+
+// Set a default nav variable for all views
+app.use((req, res, next) => {
+  res.locals.nav = `
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/about">About</a></li>
+      <!-- Add more navigation links as needed -->
+    </ul>
+  `;
+  next();
+});
+
 
 /*************************
  * View Engine
@@ -21,6 +34,7 @@ app.set("layout", "./layouts/layout") // not at views root
 /* ***********************
  * Routes
  *************************/
+app.use(express.static('public'))
 app.use(static)
 
 // Index Route
