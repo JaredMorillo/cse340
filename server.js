@@ -16,7 +16,10 @@ app.use((req, res, next) => {
   res.locals.nav = `
     <ul>
       <li><a href="/">Home</a></li>
-      <li><a href="/about">About</a></li>
+      <li><a href="/about">Custom</a></li>
+      <li><a href="/about">Sedan</a></li>
+      <li><a href="/about">SUV</a></li>
+      <li><a href="/about">Truck</a></li>
       <!-- Add more navigation links as needed -->
     </ul>
   `;
