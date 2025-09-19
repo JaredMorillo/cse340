@@ -9,22 +9,11 @@ const static = require("./routes/static")
 const expressLayouts = require("express-ejs-layouts")
 const express = require("express")
 const env = require("dotenv").config()
+const baseController = require("./controllers/baseController")
+const inventoryRoute = require("./routes/inventoryRoute")
+const utilities = require("./utilities")  
 const app = express()
 
-// Set a default nav variable for all views
-app.use((req, res, next) => {
-  res.locals.nav = `
-    <ul>
-      <li><a href="/">Home</a></li>
-      <li><a href="/about">Custom</a></li>
-      <li><a href="/about">Sedan</a></li>
-      <li><a href="/about">SUV</a></li>
-      <li><a href="/about">Truck</a></li>
-      <!-- Add more navigation links as needed -->
-    </ul>
-  `;
-  next();
-});
 
 
 /*************************
@@ -37,13 +26,14 @@ app.set("layout", "./layouts/layout") // not at views root
 /* ***********************
  * Routes
  *************************/
-app.use(express.static('public'))
 app.use(static)
 
+// Inventory routes
+app.use("/inv", inventoryRoute)
+
 // Index Route
-app.get("/", function (req, res){
-  res.render("index", { title: "Home" })
-})
+ app.get("/",utilities.handleErrors(baseController.buildHome))
+
 
 /* ***********************
  * Local Server Information
