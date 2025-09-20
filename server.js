@@ -6,6 +6,7 @@
  * Require Statements
  *************************/
 const static = require("./routes/static")
+const pool = require("./database/") 
 const expressLayouts = require("express-ejs-layouts")
 const express = require("express")
 const env = require("dotenv").config()
@@ -26,6 +27,7 @@ app.set("layout", "./layouts/layout") // not at views root
 /* ***********************
  * Routes
  *************************/
+app.use(express.static("public")) // set location for static files
 app.use(static)
 
 // Inventory routes

@@ -64,4 +64,29 @@ Util.buildClassificationGrid = async function(data){
  **************************************** */
 Util.handleErrors = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next)
 
+/*************************************
+ * Build a function for the vehicle***
+ *************************************/
+Util.buildVehicleHTML = async function(vehicle) {
+  let content
+  if (vehicle.length > 0) {
+    const vehicleTitle = `${vehicle[0].inv_make} ${vehicle[0].inv_model}`;
+    content = '<div class="individual-vehicle-container">'
+    content += '<div class="image-container"><img src="' + vehicle[0].inv_thumbnail
+    + '" alt="Image of ' + vehicleTitle
+    + ' on CSE Motors" /></div>';
+    content += '<div class="information-container">';
+    content += '<p class="title">' + vehicleTitle + '</p>';
+    content += '<p>' + 'Price: $' + '<span class="price">' + vehicle[0].inv_price + '</span>' + '</p>';
+    content += '<p>' + 'Description: ' + '<span class="description">' + vehicle[0].inv_description + '</span>' + '</p>';
+    content += '<p>' + 'Color: ' + '<span class="color">' + vehicle[0].inv_color + '</span>' + '</p>';
+    content += '<p>' + 'Miles: ' + '<span class="miles">' + vehicle[0].inv_miles + '</span>' + '</p>';
+    content += '</div>'
+    content += '</div>';
+  } else {
+    content = '<p class="notice">Sorry, no details could be found.</p>';
+  }
+  return content;
+}
+
 module.exports = Util
