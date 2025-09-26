@@ -1,5 +1,8 @@
 const invModel = require("../models/inventory-model")
 const Util = {}
+const jwt = require("jsonwebtoken")
+require("dotenv").config()
+const accModel = require("../models/account-model")
 
 /* ************************
  * Constructs the nav HTML unordered list
@@ -115,6 +118,95 @@ Util.buildVehicleContent = async function(data) {
   }
   return content;
 }
+
+/* ****************************************
+ * Middleware For Handling Errors
+ * Wrap other function in this for 
+ * General Error Handling
+ **************************************** */
+Util.handleErrors = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next)
+
+
+/* ****************************************
+* Middleware to check token validity
+**************************************** */
+Util.checkJWTToken = (req, res, next) => { //THIS FUNCTION ASSIGNS A NUMBER 1 TO LOGGEING IN CASE THERE IS A VALID TOKEN, IF NOT THIS FUNCTION DOES NOT STOP THE PROCESS, LET'S THE FLOW CONTINUES BUT IF THE ROUTE HAS THE MIDDLEWARE checkLogin, THE FLOW WILL BE STOPPED BY THAT MIDDLEWARE IF THAT NUMBER 1 IS NOT PRESENT. IN A FEW WORDS THIS FUNCTION KIND OF LET'S checkLogin KNOW WHO HAS A VALID TOKEN.
+  if (req.cookies.jwt) {
+   jwt.verify( //if the cookie exists, uses the jsonwebtoken "verify" function to check the validity of the token. The function takes three arguments: 1) the token (from the cookie), 2) the secret value stored as an environment variable, and 3) a callback function.
+    req.cookies.jwt,
+    process.env.ACCESS_TOKEN_SECRET,
+    function (err, accountData) { //the callback function (which returns an error or the account data from the token payload).
+     if (err) {
+      req.flash("Please log in")
+      res.clearCookie("jwt")
+      return res.redirect("/account/login")
+     }
+     res.locals.accountData = accountData
+     res.locals.loggedin = 1
+
+     next()
+    })
+  } else {
+    res.locals.loggedin = 0
+   next()
+  }
+ }
+
+
+ /* ****************************************
+ *  Check Login
+ * ************************************ */
+Util.checkLogin = (req, res, next) => {
+  if (res.locals.loggedin) {
+    next()
+  } else {
+    req.flash("notice", "Please log in.")
+    return res.redirect("/account/login")
+  }
+ }
+
+ /* ****************************************
+ *  Check Login
+ * ************************************ */
+ Util.validateAccountType = (req, res, next) => {
+  if (res.locals.loggedin === 1 && (res.locals.accountData.account_type === "Employee" || res.locals.accountData.account_type === "Admin")) {
+    next()
+  } if (res.locals.loggedin === 1 && res.locals.accountData.account_type === "Client") {
+    req.flash("notice", "You should be Admin or Employee to access.")
+    return res.redirect("/account/login")
+  } if (res.locals.loggedin !== 1) {
+  req.flash("notice", "Please Login.")
+  return res.redirect("/account/login");
+}
+}
+
+/* ****************************************
+ *  Make all Comments View
+ * ************************************ */
+
+Util.displayComments = async function(data, account_id) {
+  let list = `<ul class="comments-ul">`
+  data.rows.forEach((row) => {
+    list += `<li class="comments-element">
+    <p class="comments-content">${row.comment}</p>
+    <p class="comments-name">Created By: ${row.account_firstname} ${row.account_lastname}</p>
+    <p class="comments-date">${row.date}</p>`
+    if (parseInt(account_id) === row.account_id) {
+    list += `<a href="#" class="small-button">Eliminate</a>`;
+    list += `
+    <div class="small-buttons-container">
+      <p>Are you sure?</p>
+      <div>
+        <a href="/account/eliminate-comment/${row.comment_id}" class="confirm-deletion">Yes, delete it</a>
+        <a href="#" class="cancel-deletion">Cancel</a>
+      </div>
+    </div>`;
+    }
+    list += `</li>`; 
+  });
+  list += "</ul>";
+  return list;
+};
 
 
 

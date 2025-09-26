@@ -6,16 +6,39 @@
  * Require Statements
  *************************/
 const static = require("./routes/static")
-const pool = require("./database/") 
 const expressLayouts = require("express-ejs-layouts")
 const express = require("express")
 const env = require("dotenv").config()
 const baseController = require("./controllers/baseController")
 const inventoryRoute = require("./routes/inventoryRoute")
+const accountRoute = require("./routes/accountRoute");
 const utilities = require("./utilities")  
+const session = require("express-session")
+const pool = require('./database/')
+const bodyParser = require("body-parser")
+const cookieParser = require("cookie-parser")
 const app = express()
 
+/* ***********************
+ * Middleware
+ * ************************/
+ app.use(session({
+  store: new (require('connect-pg-simple')(session))({
+    createTableIfMissing: true,
+    pool,
+  }),
+  secret: process.env.SESSION_SECRET,
+  resave: true,
+  saveUninitialized: true,
+  name: 'sessionId',
+}))
 
+// Express Messages Middleware
+app.use(require('connect-flash')())
+app.use(function(req, res, next){
+  res.locals.messages = require('express-messages')(req, res)
+  next()
+})
 
 /*************************
  * View Engine
@@ -23,6 +46,18 @@ const app = express()
 app.set("view engine", "ejs")
 app.use(expressLayouts)
 app.set("layout", "./layouts/layout") // not at views root
+
+// bodyParser
+/** In order to collect the values from the incoming request body (which comes from the form), we need to make the application aware of that functionality */
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
+/** This last line tells the express application to read and work with data sent via a URL as well as from a form, stored in the request object's body. The "extended: true" object is a configuration that allows rich objects and arrays to be parsed. */
+
+//Cookie Parser
+app.use(cookieParser())
+
+app.use(utilities.checkJWTToken) //This will apply verification for all routes, however checkJWTToken will apply the next() function is the token is not present, this way users will be able to go to routes that don't have the middleware included (checkLogin), they will be able to see the home page for example without having a token but if they have the middleware, they will be directed to ("/account/login")
+
 
 /* ***********************
  * Routes
@@ -32,6 +67,9 @@ app.use(static)
 
 // Inventory routes
 app.use("/inv", inventoryRoute)
+
+// Account routes
+app.use("/account", accountRoute)
 
 // Index Route
  app.get("/",utilities.handleErrors(baseController.buildHome))
